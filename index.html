@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b1020">
+<meta name="description" content="Game vật lý vui nhộn: đu xà, thực hiện cú bay, tiếp đất, mở khóa trang phục và tranh bảng xếp hạng.">
+<meta name="color-scheme" content="dark">
+<title>Bậc Thầy Xà Đơn — Trọng Tâm</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#141b2e;--line:#293651;--gold:#ffd166;--mint:#80ed99;--red:#ef476f}
+*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--bg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#game{display:block;width:100%;height:100%;touch-action:none}
+#hud{position:fixed;inset:calc(env(safe-area-inset-top) + 10px) 10px auto;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;pointer-events:none}
+.pill{background:#0a0f1dd9;border:1px solid #ffffff20;border-radius:13px;padding:7px 10px;color:#fff;font-size:12px;line-height:1.35;backdrop-filter:blur(8px)}
+#rightHud{display:flex;gap:6px;align-items:flex-start}#musicBtn{border-color:#80ed9955}#musicBtn.off{opacity:.65;background:#121827}
+button{font:inherit;border:1px solid #ffffff24;border-radius:12px;background:#1b2740;color:#fff;padding:10px 12px;font-weight:750;cursor:pointer}
+button:active{transform:scale(.97)}button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.icon{pointer-events:auto;min-width:40px;min-height:40px;padding:8px;background:#0a0f1dd9}
+#overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:22px;background:linear-gradient(#080b16a8,#080b16ed);overflow:auto}
+#panel{width:min(440px,100%);max-height:100%;overflow:auto;border:1px solid #ffffff20;border-radius:24px;padding:22px;background:linear-gradient(150deg,#18213a,#0d1324 72%);box-shadow:0 22px 70px #0008;text-align:center}
+h1{font-size:clamp(26px,7vw,38px);line-height:1.04;margin:4px 0 8px;color:var(--gold);letter-spacing:-1px}
+.sub{color:#c2cde2;font-size:13px;line-height:1.5;margin:0 auto 16px;max-width:330px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}
+.stat{background:#ffffff08;border:1px solid #ffffff13;border-radius:13px;padding:10px 5px}.stat b{display:block;font-size:19px;color:var(--gold)}.stat span{font-size:11px;color:#aebbd2}
+#skinRow{display:flex;align-items:center;justify-content:center;gap:12px;margin:12px 0}
+#skinName{min-width:120px;font-weight:800}
+.swatch{width:42px;height:42px;border-radius:50%;border:3px solid #ffffff50;box-shadow:inset 0 0 0 3px #0002}
+#play{width:100%;background:linear-gradient(100deg,#ef476f,#ff7b54);border:0;padding:15px;font-size:17px;margin-top:8px}
+#secondary{display:flex;gap:8px;margin-top:9px}#secondary button{flex:1}
+#help{font-size:12px;color:#aebbd2;line-height:1.55;margin-top:14px}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 24px);transform:translateX(-50%);padding:9px 14px;border-radius:20px;background:#10192beF;border:1px solid #ffffff25;color:white;font-size:13px;opacity:0;transition:opacity .18s;pointer-events:none;white-space:nowrap}
+@media(min-width:700px){#panel{padding:28px}#hud{inset:18px 20px auto}}
+@media(max-height:560px){#overlay{padding:8px}#panel{padding:14px;max-height:96%;border-radius:18px}.stats{margin:8px 0}.stat{padding:6px 4px}#skinRow{margin:6px 0}#help{margin-top:8px}}
+#leaderBtn{width:100%;margin-top:8px;background:linear-gradient(100deg,#263b60,#1a2741);border-color:#ffd16666}
+#leaderModal{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;padding:12px;background:#050812eF;overflow:auto}
+#leaderPanel{width:min(560px,100%);max-height:96%;overflow:auto;background:linear-gradient(155deg,#18213a,#0d1324);border:1px solid #ffffff26;border-radius:20px;padding:16px;box-shadow:0 20px 70px #0009}
+.leaderHead{display:flex;align-items:center;justify-content:space-between;gap:8px}.leaderHead h2{margin:0;color:var(--gold);font-size:22px}.leaderTabs{display:flex;gap:6px;margin:12px 0}.leaderTabs button{flex:1;padding:9px 6px}.leaderTabs button.active{background:#ffd166;color:#151827;border-color:#ffd166}
+.leaderForm{display:grid;grid-template-columns:1fr auto;gap:7px;margin:8px 0}.leaderForm input,.configGrid input{width:100%;min-width:0;border:1px solid #ffffff24;border-radius:10px;padding:10px;background:#080e1c;color:#fff;font:inherit}
+.leaderList{display:grid;gap:6px;margin:12px 0;max-height:42vh;overflow:auto}.leaderItem{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:8px;align-items:center;padding:9px;background:#ffffff08;border:1px solid #ffffff12;border-radius:11px}.rank{font-size:16px;font-weight:900;color:var(--gold);text-align:center}.leaderName{font-weight:800;overflow-wrap:anywhere}.leaderMeta{font-size:11px;color:#aebbd2;margin-top:2px}.leaderScore{font-weight:900;color:#80ed99;text-align:right}.smallNote{font-size:11px;color:#aebbd2;line-height:1.45}.configGrid{display:grid;gap:7px;margin:8px 0}.configGrid label{display:grid;gap:4px;text-align:left;font-size:11px;color:#b8c5da}.leaderActions{display:flex;gap:7px;flex-wrap:wrap}.leaderActions button{flex:1}.leaderClose{min-width:42px}.emptyState{padding:22px 8px;text-align:center;color:#aebbd2;font-size:13px}
+@media(max-width:420px){#leaderPanel{padding:12px;border-radius:16px}.leaderHead h2{font-size:19px}.leaderList{max-height:38vh}}
+#labBtn{width:100%;margin-top:8px;padding:12px;background:linear-gradient(100deg,#165e63,#173b52);border-color:#68e8d055;color:#c6fff0}
+#labModal{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;padding:12px;background:#030914eF;overflow:auto}
+#labPanel{width:min(560px,100%);max-height:96%;overflow:auto;background:linear-gradient(155deg,#172a42,#0a1525);border:1px solid #68e8d055;border-radius:22px;padding:18px;box-shadow:0 25px 90px #000a;color:#fff}
+.labHead{display:flex;align-items:center;justify-content:space-between;gap:8px}.labHead h2{font-size:21px;color:#b7ffe9;margin:0}.labDesc,.labExplain{font-size:12px;line-height:1.5;color:#b8c8dc}.leverStage{position:relative;height:124px;margin:10px 0 14px;border-radius:16px;background:linear-gradient(#0a1828,#10283a);border:1px solid #ffffff13;overflow:hidden}.leverBeam{position:absolute;left:12%;right:12%;top:48px;height:8px;border-radius:6px;background:linear-gradient(#e9f8ff,#6d9ab5);transform:rotate(0deg);transform-origin:50% 50%;transition:transform .18s}.leverFulcrum{position:absolute;left:50%;top:53px;transform:translateX(-50%);width:0;height:0;border-left:19px solid transparent;border-right:19px solid transparent;border-bottom:48px solid #f0bb58;filter:drop-shadow(0 3px 3px #0006)}.leverWeight{position:absolute;top:16px;width:32px;height:30px;border-radius:7px 7px 3px 3px;background:linear-gradient(135deg,#f8d777,#bb8126);border:2px solid #fff1a8;color:#1d2935;font-size:12px;font-weight:900;display:grid;place-items:center;transform:translateX(-50%);transition:left .18s}.leverWeight.right{background:linear-gradient(135deg,#9bf3d4,#2d9b8a);border-color:#c7ffec}.labGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.labControl{background:#ffffff08;border:1px solid #ffffff14;border-radius:13px;padding:10px;text-align:left}.labControl label{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:#dce8f7;font-weight:700}.labControl input{width:100%;accent-color:#68e8d0;margin:12px 0 3px}.labMetrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin:10px 0}.labMetric{padding:9px 5px;border-radius:11px;background:#ffffff08;text-align:center}.labMetric b{display:block;color:#b7ffe9;font-size:16px}.labMetric span{font-size:10px;color:#aebbd2}.labActions{display:flex;gap:8px;margin-top:10px}.labActions button{flex:1}.labResult{margin-top:10px;padding:11px;border-radius:12px;background:#ffffff08;color:#e3f3ff;font-size:13px;line-height:1.5}.labResult.good{border:1px solid #68e8d055;color:#b7ffe9}.labResult.bad{border:1px solid #ffb86b55;color:#ffe0b3}@media(max-width:380px){#labPanel{padding:12px}.labGrid{gap:7px}.labControl{padding:8px}.labHead h2{font-size:18px}}
+@media(prefers-reduced-motion:reduce){button:active{transform:none}#toast{transition:none}}
+
+/* VISUAL REFRESH — self-contained, lightweight, mobile-first */
+:root{--bg:#080d19;--panel:#101a2c;--line:#31415b;--gold:#ffe08a;--mint:#68f0b2;--red:#ff6c87;--ink:#07111d}
+html,body{background:#080d19;color:#f5f8ff}
+#game{filter:saturate(1.08)}
+#hud{inset:calc(env(safe-area-inset-top) + 12px) 12px auto;align-items:center;gap:10px}
+.pill{background:linear-gradient(145deg,#0a1425eF,#101e31e8);border:1px solid #a9d8ff30;border-radius:14px;padding:9px 12px;box-shadow:0 7px 22px #02061145,inset 0 1px #ffffff0c;backdrop-filter:blur(12px);font-weight:750;letter-spacing:.1px}
+#rightHud{gap:7px} .icon{width:42px;height:42px;min-width:42px;min-height:42px;border-radius:14px;background:linear-gradient(145deg,#14253aee,#091321f2);border:1px solid #a9d8ff35;box-shadow:0 6px 18px #0004,inset 0 1px #ffffff12;font-size:17px;transition:transform .16s,border-color .16s,background .16s}
+.icon:hover{border-color:#68f0b2aa;background:#17334a}
+#overlay{padding:18px;background:radial-gradient(ellipse at 50% 16%,#20436d75,transparent 52%),linear-gradient(180deg,#050a14a8,#050914f2);backdrop-filter:blur(3px)}
+#panel{position:relative;width:min(450px,100%);max-height:100%;overflow:auto;padding:26px 23px 22px;border:1px solid #a6d8ff35;border-radius:30px;background:linear-gradient(155deg,#152943f5 0%,#0d192bf7 52%,#0a1221f7 100%);box-shadow:0 28px 90px #0009,0 0 0 5px #ffffff05,inset 0 1px #ffffff1a;text-align:center}
+#panel:before{content:"";position:absolute;left:16%;right:16%;top:0;height:2px;border-radius:9px;background:linear-gradient(90deg,transparent,#68f0b2,#7bd5ff,#ffe08a,transparent);opacity:.9}
+#panel:after{content:"GYM SIMULATOR  /  PHYSICS CHALLENGE";display:block;margin:18px auto 0;color:#7795b5;font-size:9px;letter-spacing:2.4px;font-weight:900}
+h1{font-size:clamp(27px,7vw,39px);line-height:.99;margin:9px 0 12px;color:#fff;letter-spacing:-1.6px;text-shadow:0 3px 0 #142943,0 0 28px #68f0b233}
+.sub{color:#b7c9e1;font-size:13px;line-height:1.6;margin:0 auto 17px;max-width:340px}
+.stats{gap:9px;margin:18px 0}.stat{position:relative;overflow:hidden;background:linear-gradient(145deg,#ffffff0d,#ffffff04);border:1px solid #b7d9ff20;border-radius:17px;padding:12px 5px;box-shadow:inset 0 1px #ffffff08}.stat:before{content:"";position:absolute;top:0;left:18%;right:18%;height:2px;background:linear-gradient(90deg,transparent,#68f0b2,transparent)}.stat b{font-size:22px;color:#ffe08a;text-shadow:0 0 18px #ffe08a22}.stat span{font-size:10px;color:#91a8c4;font-weight:800;letter-spacing:.6px;text-transform:uppercase}
+#skinRow{gap:13px;margin:14px 0 16px}#skinRow>button{width:42px;height:42px;border-radius:14px;background:#1b3048;border-color:#8ccaff30}#skinName{font-size:14px;letter-spacing:.2px}.swatch{width:48px;height:48px;border:3px solid #d8f1ffb0;box-shadow:0 0 0 5px #ffffff09,0 7px 22px #0005,inset 0 0 0 3px #0003}
+button{border:1px solid #b7d9ff24;border-radius:13px;background:linear-gradient(145deg,#1a2b42,#142238);box-shadow:0 5px 14px #0002,inset 0 1px #ffffff0b;color:#f7fbff;transition:transform .14s,border-color .14s,filter .14s}
+button:hover{filter:brightness(1.12);border-color:#8ccaff65}button:active{transform:translateY(1px) scale(.985)}
+#play{position:relative;overflow:hidden;width:100%;border:0;border-radius:16px;background:linear-gradient(105deg,#56edb0,#6be7d4 48%,#6cc9ff);color:#071822;padding:16px 14px;font-size:15px;font-weight:950;letter-spacing:1.1px;text-shadow:0 1px #ffffff55;box-shadow:0 10px 28px #4be6b52a,inset 0 1px #ffffffa8;margin-top:7px}
+#play:before{content:"";position:absolute;top:-50%;left:-35%;width:22%;height:200%;transform:rotate(25deg);background:#ffffff70;filter:blur(8px);animation:playShine 4.5s ease-in-out infinite}
+@keyframes playShine{0%,68%{left:-35%;opacity:0}75%{opacity:.7}100%{left:125%;opacity:0}}
+#secondary{gap:9px;margin-top:10px}#secondary button{flex:1;padding:11px 8px;background:#14243a;border-color:#a9d8ff20;color:#cfdef0;font-size:12px}
+#leaderBtn{margin-top:10px;padding:13px;background:linear-gradient(105deg,#273e5d,#1c3048);border:1px solid #ffe08a55;color:#ffe8a7;font-size:12px;letter-spacing:.3px}
+#help{font-size:11px;color:#829ab7;line-height:1.7;margin:15px auto 0;max-width:320px}
+#toast{z-index:40;bottom:calc(env(safe-area-inset-bottom) + 25px);padding:11px 16px;border-radius:15px;background:#102238f5;border:1px solid #8debc866;box-shadow:0 10px 35px #0007;color:#effff9;font-weight:750}
+#leaderModal{background:#030914d9;backdrop-filter:blur(14px)}#leaderPanel{border:1px solid #8ccaff3d;border-radius:24px;padding:18px;background:linear-gradient(155deg,#172a42,#0a1525);box-shadow:0 25px 90px #000a,inset 0 1px #ffffff12} .leaderHead h2{color:#ffe08a;letter-spacing:-.5px}.leaderTabs button{border-radius:12px;background:#13243a}.leaderTabs button.active{background:linear-gradient(100deg,#ffe08a,#ffc86b);color:#172032;border-color:transparent}.leaderItem{background:#ffffff07;border:1px solid #a9d8ff17;border-radius:13px}.leaderScore{color:#68f0b2}.leaderForm input,.configGrid input{background:#071321;border-color:#a9d8ff28;border-radius:12px}.emptyState{color:#9bb0c8}
+@media(min-width:700px){#panel{padding:30px}#hud{inset:18px 22px auto}}
+@media(max-height:650px){#panel{padding:17px 18px}#panel:after{margin-top:10px}.stats{margin:10px 0}.stat{padding:8px 4px}#skinRow{margin:8px 0}#help{margin-top:9px}h1{font-size:clamp(24px,6vw,32px)}}
+@media(max-width:380px){#hud{inset:calc(env(safe-area-inset-top) + 7px) 7px auto;gap:5px}.pill{padding:7px 8px;font-size:11px}#rightHud{gap:4px}.icon{width:37px;height:37px;min-width:37px;min-height:37px;padding:6px}#panel{padding:21px 16px 17px;border-radius:24px}}
+@media(prefers-reduced-motion:reduce){#play:before{animation:none;display:none}button{transition:none}}
+
+</style>
+</head>
+<body>
+<canvas id="game" aria-label="Trò chơi Bậc Thầy Xà Đơn"></canvas>
+<div id="hud">
+  <div class="pill" id="levelHud">Màn 1 · Phòng Gym<br>Điểm 0</div>
+  <div id="rightHud">
+    <div class="pill" id="coinHud">🪙 0</div>
+    <button class="icon" id="musicBtn" aria-label="Bật hoặc tắt nhạc nền" title="Nhạc nền">🎵</button>
+    <button class="icon" id="soundBtn" aria-label="Bật hoặc tắt hiệu ứng âm thanh">🔊</button>
+    <button class="icon" id="pauseBtn" aria-label="Tạm dừng">Ⅱ</button>
+  </div>
+</div>
+<div id="overlay">
+  <section id="panel">
+    <h1 id="title">BẬC THẦY XÀ ĐƠN</h1>
+    <p class="sub" id="subtitle">Canh nhịp, buông xà đúng lúc và tiếp đất thật vững. Vật lý là đối thủ cuối cùng!</p>
+    <div class="stats">
+      <div class="stat"><b id="bestStat">0</b><span>Kỷ lục</span></div>
+      <div class="stat"><b id="coinStat">0</b><span>Xu</span></div>
+      <div class="stat"><b id="levelStat">1</b><span>Màn mở khóa</span></div>
+    </div>
+    <div id="skinRow">
+      <button id="prevSkin" aria-label="Trang phục trước">◀</button>
+      <div><div class="swatch" id="swatch"></div><div id="skinName">Cổ điển</div><small id="skinCost" style="color:#b9c5da"></small></div>
+      <button id="nextSkin" aria-label="Trang phục tiếp theo">▶</button>
+    </div>
+    <button id="play">BẮT ĐẦU CHƠI</button>
+    <div id="secondary"><button id="howBtn">Cách chơi</button><button id="resetBtn">Xóa tiến trình</button></div>
+    <button id="leaderBtn">🏆 BẢNG XẾP HẠNG NHIỀU NGƯỜI</button>
+    <button id="labBtn">⚖️ PHÒNG THÍ NGHIỆM VẬT LÍ</button>
+    <p id="help">Giữ màn hình để co người · Thả để duỗi · Chạm nhanh để buông xà. Dùng 🎵 để bật/tắt nhạc nền và 🔊 cho hiệu ứng.</p>
+  </section>
+</div>
+<div id="toast" role="status"></div>
+<div id="leaderModal" role="dialog" aria-modal="true" aria-labelledby="leaderTitle">
+  <section id="leaderPanel">
+    <div class="leaderHead"><h2 id="leaderTitle">🏆 Bảng xếp hạng</h2><button class="leaderClose" id="leaderClose" aria-label="Đóng bảng xếp hạng">✕</button></div>
+    <p class="smallNote">Trên máy lưu riêng trên thiết bị. Toàn cầu đồng bộ qua máy chủ của game giữa các thiết bị.</p>
+    <div class="leaderTabs"><button id="tabLocal" class="active">📱 Trên máy</button><button id="tabGlobal">🌐 Toàn cầu</button><button id="tabSetup">ℹ️ Máy chủ</button></div>
+    <div id="leaderLocalView">
+      <div class="leaderForm"><input id="playerName" maxlength="18" autocomplete="nickname" placeholder="Tên hiển thị của bạn"><button id="savePlayerName">Lưu tên</button></div>
+      <div id="localLeaderboard" class="leaderList"></div>
+      <p class="smallNote">Kết quả được ghi lại sau mỗi lần tiếp đất thành công. Bảng trên máy không tự chia sẻ sang thiết bị khác.</p>
+    </div>
+    <div id="leaderGlobalView" hidden>
+      <div class="leaderActions"><button id="refreshGlobal">↻ Tải lại BXH</button><button id="submitBest">Đẩy kỷ lục hiện tại</button></div>
+      <div id="globalStatus" class="smallNote" aria-live="polite">Chưa kết nối máy chủ.</div>
+      <div id="globalLeaderboard" class="leaderList"><div class="emptyState">Đang kết nối máy chủ bảng xếp hạng…</div></div>
+    </div>
+    <div id="leaderSetupView" hidden>
+      <p><strong>🌐 Máy chủ bảng xếp hạng</strong></p>
+      <p class="smallNote">Game dùng API trực tuyến được lưu trữ cùng website. Khi mở game từ liên kết website đã triển khai, mọi người chơi có thể xem cùng một bảng xếp hạng mà không cần tự nhập khóa kết nối.</p>
+      <div class="leaderActions"><button id="checkServer">Kiểm tra kết nối</button></div>
+      <div id="serverStatus" class="smallNote" aria-live="polite">Máy chủ sẽ được kiểm tra khi bạn mở mục này.</div>
+      <p class="smallNote">Lưu ý: đây là bảng xếp hạng cộng đồng, chưa có tài khoản đăng nhập hoặc hệ thống chống gian lận hoàn chỉnh. Không sử dụng cho giải thưởng có giá trị.</p>
+    </div>
+  </section>
+</div>
+<div id="labModal" role="dialog" aria-modal="true" aria-labelledby="labTitle">
+  <section id="labPanel">
+    <div class="labHead"><h2 id="labTitle">⚖️ Phòng thí nghiệm Vật lí</h2><button id="labClose" aria-label="Đóng phòng thí nghiệm">✕</button></div>
+    <p class="labDesc">Điều chỉnh khoảng cách của vật bên phải để cân bằng đòn bẩy. Trong mô hình này, khối lượng được tính bằng kg và cánh tay đòn bằng m.</p>
+    <div class="leverStage" aria-label="Mô phỏng đòn bẩy"><div id="leftWeight" class="leverWeight">3 kg</div><div id="rightWeight" class="leverWeight right">2 kg</div><div id="leverBeam" class="leverBeam"></div><div class="leverFulcrum"></div></div>
+    <div class="labGrid">
+      <div class="labControl"><label for="leftMass">Khối lượng trái <b id="leftMassVal">3 kg</b></label><input id="leftMass" type="range" min="1" max="5" step="1" value="3"><label for="leftDist">Khoảng cách trái <b id="leftDistVal">2 m</b></label><input id="leftDist" type="range" min="1" max="4" step="1" value="2"></div>
+      <div class="labControl"><label for="rightMass">Khối lượng phải <b id="rightMassVal">2 kg</b></label><input id="rightMass" type="range" min="1" max="5" step="1" value="2"><label for="rightDist">Khoảng cách phải <b id="rightDistVal">3 m</b></label><input id="rightDist" type="range" min="1" max="4" step="1" value="3"></div>
+    </div>
+    <div class="labMetrics"><div class="labMetric"><b id="leftMoment">6</b><span>Mômen trái (kg·m)</span></div><div class="labMetric"><b id="rightMoment">6</b><span>Mômen phải (kg·m)</span></div><div class="labMetric"><b id="labWins">0</b><span>Lần cân bằng</span></div></div>
+    <div id="labResult" class="labResult" aria-live="polite">Công thức: mômen lực = lực × cánh tay đòn. Với cùng một gia tốc trọng trường, có thể so sánh khối lượng × khoảng cách ở hai bên.</div>
+    <div class="labActions"><button id="labCheck">Kiểm tra cân bằng</button><button id="labChallenge">Thử thách mới</button></div>
+    <p class="labExplain">Điều kiện cân bằng trong mô hình: m₁ × d₁ = m₂ × d₂. Mô phỏng này bỏ qua khối lượng của thanh và ma sát, đúng với mô hình đòn bẩy lí tưởng cơ bản.</p>
+  </section>
+</div>
+<script>
+(()=>{'use strict';
+const canvas=document.querySelector('#game'),ctx=canvas.getContext('2d',{alpha:false});
+const W=360,H=640,FLOOR=562,BAR={x:60,y:150},ARM=110,TAU=Math.PI*2,G=920;
+const worlds=[
+ {name:'Phòng Gym',sky:['#1d2a5c','#4a4fa8'],ground:'#292442',accent:'#ffb703'},
+ {name:'Công viên',sky:['#5fb4ff','#d4f4ff'],ground:'#3f8f4f',accent:'#ff9f1c'},
+ {name:'Mái nhà',sky:['#ff8a5b','#4a1c71'],ground:'#2a2233',accent:'#48cae4'},
+ {name:'Bể bơi',sky:['#38b6ff','#b5ecff'],ground:'#1376a8',accent:'#ff6b9d'},
+ {name:'Trạm vũ trụ',sky:['#05010f','#2a0a4a'],ground:'#1a1030',accent:'#80ffdb'}
+];
+const skins=[
+ {name:'Cổ điển',shirt:'#4cc9f0',pants:'#7b2cbf',cost:0},
+ {name:'Lửa',shirt:'#ff6b35',pants:'#2b2d42',cost:40},
+ {name:'Rừng',shirt:'#52b788',pants:'#1b4332',cost:100},
+ {name:'Vàng ròng',shirt:'#ffd60a',pants:'#7a5c00',cost:200},
+ {name:'Neon',shirt:'#f72585',pants:'#3a0ca3',cost:350}
+];
+const defaults={best:0,coins:0,unlocked:1,owned:[0],skin:0,mute:false,bgm:true};
+const LB_KEY='bar-master-leaderboard-v1', PROFILE_KEY='bar-master-profile-v1';
+let lbTab='local', leaderboardBusy=false;
+let data=load(),level=1,score=0,combo=0,mode='menu',selected=data.skin,player=null,platform=null,particles=[],trail=[],floatingTexts=[],time=0,last=0,acc=0,scale=1,ox=0,oy=0,dpr=1,held=false,pressAt=0,firstAttempt=true,toastTimer=0,audio=null,musicGain=null,musicTimer=null,musicStep=0,muted=!!data.mute,bgmEnabled=data.bgm!==false;
+function load(){
+  let raw=null;
+  try{raw=JSON.parse(localStorage.getItem('bar-master-v3')||'null')}catch{}
+  if(!raw){try{raw=JSON.parse(localStorage.getItem('bm2')||'null')}catch{}}
+  if(!raw||typeof raw!=='object')return {...defaults,owned:[0]};
+  const d={...defaults,...raw};
+  d.best=Number.isFinite(+d.best)?Math.max(0,Math.floor(+d.best)):0;
+  d.coins=Number.isFinite(+d.coins)?Math.max(0,Math.floor(+d.coins)):0;
+  d.unlocked=Number.isFinite(+d.unlocked)?Math.max(1,Math.floor(+d.unlocked)):1;
+  d.owned=Array.isArray(d.owned)?[...new Set(d.owned.map(Number).filter(i=>Number.isInteger(i)&&i>=0&&i<skins.length))]:[0];
+  if(!d.owned.includes(0))d.owned.unshift(0);
+  d.skin=Number.isInteger(+d.skin)&&+d.skin>=0&&+d.skin<skins.length&&d.owned.includes(+d.skin)?+d.skin:0;
+  d.mute=!!d.mute;d.bgm=d.bgm!==false;
+  return d;
+}
+function save(){try{localStorage.setItem('bar-master-v3',JSON.stringify(data))}catch{toast('Không thể lưu tiến trình trên thiết bị này.')}}
+function worldIndex(l){return Math.floor((l-1)/6)%5}
+function rng(n){const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x)}
+function platformFor(l){const wi=worldIndex(l),k=(l-1)%6;return {baseX:l<3?225:200+rng(l)*85,x:225,y:wi===2?450:500,w:Math.max(58,116-l*2.5),amp:wi>0&&k>=3?Math.min(34,10+l):0,speed:1.1+rng(l+5),wind:wi===2?(k%2?1:-1)*55:0,g:wi===4?600:G}}
+function freshRound(){acc=0;platform=platformFor(level);player={mode:'swing',angle:-.7,prevAngle:-.7,omega:0,r:ARM,radial:0,x:0,y:0,vx:0,vy:0,phase:0,spin:0,angular:0,t:0,shake:0,banner:2.0,coins:[1,2,3].map((n)=>({x:115+(platform.baseX-115)*n/4,y:270+(platform.y-100-270)*n/4-65*Math.sin(n/4*Math.PI),got:false})),reason:'',message:''};particles=[];trail=[];floatingTexts=[];held=false;firstAttempt=true;mode='playing';updateHud()}
+function initAudio(){
+ try{
+  if(!audio){audio=new(window.AudioContext||window.webkitAudioContext)();musicGain=audio.createGain();musicGain.gain.value=0;musicGain.connect(audio.destination)}
+  if(audio.state==='suspended')audio.resume();
+  syncMusic();
+ }catch{}
+}
+function beep(freq=440,duration=.12,type='sine',volume=.06){if(!audio||muted)return;try{const o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(volume,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+duration)}catch{}}
+// Nhạc nền chiptune tự tổng hợp bằng Web Audio API, không tải file ngoài.
+const melody=[659,784,988,784,587,659,784,659,523,659,784,659,494,587,659,587,440,523,659,523,392,494,587,494,440,523,659,784,659,587,523,494];
+const bass=[131,0,165,0,110,0,147,0,98,0,131,0,123,0,147,0];
+function musicNote(freq,duration,when,volume=.018,type='square'){if(!audio||!musicGain||!freq)return;try{const o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.setValueAtTime(freq,when);g.gain.setValueAtTime(.0001,when);g.gain.linearRampToValueAtTime(volume,when+.012);g.gain.exponentialRampToValueAtTime(.0001,when+duration);o.connect(g);g.connect(musicGain);o.start(when);o.stop(when+duration+.02)}catch{}}
+function syncMusic(){if(!audio||!musicGain)return;const active=bgmEnabled&&!document.hidden&&mode!=='paused';musicGain.gain.cancelScheduledValues(audio.currentTime);musicGain.gain.setTargetAtTime(active ? .72 : 0,audio.currentTime,.12);if(active&&!musicTimer){musicStep=0;musicTimer=setInterval(()=>{if(!audio||audio.state!=='running'||!bgmEnabled||document.hidden||mode==='paused')return;const now=audio.currentTime,idx=musicStep%melody.length;musicNote(melody[idx],.19,now,.045,'triangle');if(idx%2===0)musicNote(bass[(musicStep>>1)%bass.length],.32,now,.035,'sine');if(idx%8===0)musicNote(melody[(idx+7)%melody.length]*2,.09,now+.06,.014,'sine');musicStep++},190)}else if(!active&&musicTimer){clearInterval(musicTimer);musicTimer=null}}
+function toggleMusic(){initAudio();bgmEnabled=!bgmEnabled;data.bgm=bgmEnabled;save();updateHud();syncMusic();toast(bgmEnabled?'Đã bật nhạc nền 🎵':'Đã tắt nhạc nền');}
+function soundCoin(){beep(988,.08,'square');setTimeout(()=>beep(1319,.12,'square'),70)}
+function toast(msg){const el=document.querySelector('#toast');el.textContent=msg;el.style.opacity='1';clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.opacity='0',1500)}
+function updateHud(){document.querySelector('#levelHud').innerHTML=`Màn ${level} · ${worlds[worldIndex(level)].name}<br>Điểm ${score}`;document.querySelector('#coinHud').textContent='🪙 '+data.coins;document.querySelector('#soundBtn').textContent=muted?'🔇':'🔊';document.querySelector('#soundBtn').setAttribute('aria-label',muted?'Bật hiệu ứng âm thanh':'Tắt hiệu ứng âm thanh');const mb=document.querySelector('#musicBtn');mb.textContent=bgmEnabled?'🎵':'🎼';mb.classList.toggle('off',!bgmEnabled);mb.setAttribute('aria-label',bgmEnabled?'Tắt nhạc nền':'Bật nhạc nền');mb.title=bgmEnabled?'Nhạc nền đang bật':'Nhạc nền đang tắt'}
+function pointPose(x,y,phase,tuck=0){const s=Math.sin(phase),c=Math.cos(phase),p=(a,b)=>({x:x+s*a+c*b,y:y+c*a-s*b}),hip=14*(1-.3*tuck),foot=hip+24*(1-.6*tuck),leg=-32+tuck*42;return {head:p(-27,0),neck:p(-14,0),hip:p(hip,0),leftHand:p(-10,-9),rightHand:p(-10,9),leftLeg:p(leg,-9),rightLeg:p(leg,9),leftFoot:p(foot,-4),rightFoot:p(foot,4)}}
+function currentTuck(){return player?Math.max(0,Math.min(1,(ARM-player.r)/(ARM-52))):0}
+function swingPosition(){return {x:BAR.x+player.r*Math.sin(player.angle),y:BAR.y+player.r*Math.cos(player.angle)}}
+function releaseBar(){if(!player||player.mode!=='swing')return;const {x,y}=swingPosition(),r=player.r,a=player.angle,o=player.omega;player.x=x;player.y=y;player.vx=r*o*Math.cos(a)+player.radial*Math.sin(a);player.vy=-r*o*Math.sin(a)+player.radial*Math.cos(a);player.phase=a;player.angular=o;player.spin=0;player.mode='fly';firstAttempt=false;held=false;beep(420,.1,'square');burst(BAR.x,BAR.y,8,'#fff',100);navigator.vibrate?.(18)}
+function burst(x,y,n,color,speed=150){for(let i=0;i<n;i++){const a=Math.random()*TAU,v=Math.random()*speed;particles.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-35,life:.65,max:.65,color:Array.isArray(color)?color[i%color.length]:color,size:2+Math.random()*3})}}
+function floatText(x,y,label,color='#ffe08a',size=17){floatingTexts.push({x,y,label,color,size,life:1,max:1,vy:-32});if(floatingTexts.length>24)floatingTexts.shift()}
+function crash(reason){if(!player||player.mode==='crash'||player.mode==='stick')return;player.mode='crash';player.t=0;player.reason=reason;player.message=['Úp mặt xuống mat!','Vật lý nói KHÔNG','Trọng tâm đi đâu rồi?','Pha tiếp đất khó quên!'][Math.random()*4|0];player.shake=10;combo=0;beep(100,.3,'sawtooth',.12);burst(player.x,player.y,18,['#ffd166','#fff','#ff6b6b'],230);navigator.vibrate?.([50,30,80]);updateHud()}
+function land(q){const ang=Math.abs(wrap(player.phase)),feet=(q.leftFoot.x+q.rightFoot.x)/2;const quality=Math.max(0,1-ang/1.15)*42+Math.max(0,1-Math.abs(player.angular)/7)*24+Math.max(0,1-player.vy/1050)*14+(1-Math.min(1,Math.abs(feet-platform.x)/(platform.w/2+5)))*20;if(quality<43){crash('rot');return}const flips=Math.floor(Math.abs(player.spin)/TAU+.25),stable=quality>=66,perfect=quality>=88;player.mode='stick';player.t=0;player.flips=flips;player.gain=Math.round(((stable?20:10)*Math.min(level,10)+flips*25+(perfect?25:0))*(1+Math.max(0,combo)*.2));combo=stable?combo+1:0;score+=player.gain;data.best=Math.max(data.best,score);data.unlocked=Math.max(data.unlocked,level+1);data.coins+=Math.max(1,Math.floor(player.gain/18));save();saveLocalScore(score,level);submitOnlineScore(score,level);beep(perfect?880:stable?660:330,.25,'triangle',.09);burst(feet,platform.y,perfect?32:20,['#ffd166','#4cc9f0','#f72585','#80ed99','#fff'],280);floatText(feet,platform.y-28,perfect?'HOÀN HẢO!':stable?'TIẾP ĐẤT!':'TỐT!',perfect?'#ffe08a':stable?'#80ed99':'#b8e7ff',perfect?22:18);floatText(feet,platform.y-3,'+'+player.gain+' ĐIỂM','#ffe08a',15);navigator.vibrate?.(stable?[25,25,25]:25);updateHud()}
+function wrap(a){while(a>Math.PI)a-=TAU;while(a<-Math.PI)a+=TAU;return a}
+function physics(dt){if(!player)return;const p=player;platform.x=platform.baseX+platform.amp*Math.sin(time*platform.speed);p.t+=dt;
+if(p.mode==='swing'){const target=held?52:ARM,d=target-p.r,move=Math.sign(d)*Math.min(Math.abs(d),250*dt);p.radial=dt?move/dt:0;p.omega+=(-(platform.g/p.r)*Math.sin(p.angle)-2*(p.radial/p.r)*p.omega-.08*p.omega)*dt;p.prevAngle=p.angle;p.angle+=p.omega*dt;p.r+=move;if(p.prevAngle*p.angle<0&&Math.abs(p.omega)>1.2)beep(520,.035,'triangle',.025)}
+else if(p.mode==='fly'){const target=held?52:ARM,d=target-p.r;p.r+=Math.sign(d)*Math.min(Math.abs(d),250*dt);const k=(p.r/ARM)**2,assist=Math.max(0,1-level/12);if(!held&&assist>0)p.angular+=(-wrap(p.phase)*24-p.angular*3)*assist*dt*k;p.angular=Math.max(-12,Math.min(12,p.angular));p.vx+=platform.wind*dt;p.vy+=platform.g*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.phase+=p.angular*dt;p.spin+=p.angular*dt;trail.push({x:p.x,y:p.y,life:1});if(trail.length>34)trail.shift();
+const tuck=currentTuck(),q=pointPose(p.x,p.y,p.phase,tuck),feetY=Math.max(q.leftFoot.y,q.rightFoot.y),feetX=(q.leftFoot.x+q.rightFoot.x)/2;
+for(const c of p.coins){if(!c.got&&Math.hypot(c.x-p.x,c.y-p.y)<27){c.got=true;data.coins++;score+=15;save();soundCoin();burst(c.x,c.y,12,['#ffd60a','#fff1a8','#fff'],135);floatText(c.x,c.y-14,'+15 ĐIỂM','#ffe08a',15);updateHud()}}
+const wasFeet=feetY-p.vy*dt;if(p.vy>0&&wasFeet<platform.y&&feetY>=platform.y&&feetX>platform.x-platform.w/2-5&&feetX<platform.x+platform.w/2+5){land(q);return}
+for(const key of Object.keys(q)){const v=q[key];if(v.y>=FLOOR){crash(v.x>platform.x-platform.w/2&&v.x<platform.x+platform.w/2?'wall':'floor');return}if(v.y>=platform.y&&v.y<platform.y+10&&v.x>platform.x-platform.w/2&&v.x<platform.x+platform.w/2){crash('wall');return}}
+if(p.x<-45||p.x>405||p.y>H+80)crash('out')}
+else if(p.mode==='stick'){if(p.t>1.25)showRoundEnd(true)}
+else if(p.mode==='crash'){if(p.t>1.15)showRoundEnd(false)}
+}
+function safeName(v){return String(v||'Người chơi').replace(/[<>\u0000-\u001f]/g,'').trim().slice(0,18)||'Người chơi'}
+function getProfile(){try{return safeName(localStorage.getItem(PROFILE_KEY)||'Người chơi')}catch{return 'Người chơi'}}
+function setProfile(v){const n=safeName(v);try{localStorage.setItem(PROFILE_KEY,n)}catch{};const input=document.querySelector('#playerName');if(input)input.value=n;return n}
+function getLocalScores(){try{const a=JSON.parse(localStorage.getItem(LB_KEY)||'[]');return Array.isArray(a)?a.filter(x=>x&&typeof x.name==='string'&&Number.isFinite(+x.score)).slice(0,100):[]}catch{return []}}
+function saveLocalScore(points,lvl){const name=getProfile(),rows=getLocalScores();rows.push({name,score:Math.max(0,Math.floor(points)),level:Math.max(1,Math.floor(lvl)),date:new Date().toISOString()});rows.sort((a,b)=>b.score-a.score||String(a.date).localeCompare(String(b.date)));try{localStorage.setItem(LB_KEY,JSON.stringify(rows.slice(0,100)))}catch{};renderLocalScores()}
+function escapeHTML(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function renderScores(el,rows,global=false){const bestByName=new Map();for(const r of rows){const name=safeName(r.name||r.username||'Người chơi'),old=bestByName.get(name);if(!old||Number(r.score)>Number(old.score))bestByName.set(name,r)}const ranked=[...bestByName.values()].sort((a,b)=>Number(b.score)-Number(a.score)||String(a.date||a.created_at||'').localeCompare(String(b.date||b.created_at||'')));if(!ranked.length){el.innerHTML='<div class="emptyState">Chưa có kết quả. Hãy chơi một màn và tiếp đất thành công!</div>';return}el.innerHTML=ranked.slice(0,50).map((r,i)=>`<div class="leaderItem"><div class="rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div><div><div class="leaderName">${escapeHTML(r.name||r.username||'Người chơi')}</div><div class="leaderMeta">Màn ${Math.max(1,Number(r.level)||1)}${r.date||r.created_at?' · '+escapeHTML(new Date(r.date||r.created_at).toLocaleDateString('vi-VN')):''}</div></div><div class="leaderScore">${Math.max(0,Number(r.score)||0).toLocaleString('vi-VN')}<br><span class="leaderMeta">điểm</span></div></div>`).join('')}
+function renderLocalScores(){renderScores(document.querySelector('#localLeaderboard'),getLocalScores())}
+function setLeaderTab(tab){lbTab=tab;for(const [id,v] of [['tabLocal','local'],['tabGlobal','global'],['tabSetup','setup']])document.querySelector('#'+id).classList.toggle('active',v===tab);document.querySelector('#leaderLocalView').hidden=tab!=='local';document.querySelector('#leaderGlobalView').hidden=tab!=='global';document.querySelector('#leaderSetupView').hidden=tab!=='setup';if(tab==='local')renderLocalScores();if(tab==='global')loadGlobalScores();if(tab==='setup')checkServer()}
+function openLeaderboard(){document.querySelector('#leaderModal').style.display='flex';document.querySelector('#playerName').value=getProfile();setLeaderTab('local')}
+function closeLeaderboard(){document.querySelector('#leaderModal').style.display='none'}
+async function loadGlobalScores(){const status=document.querySelector('#globalStatus'),list=document.querySelector('#globalLeaderboard');if(leaderboardBusy)return;leaderboardBusy=true;status.textContent='Đang tải bảng xếp hạng…';try{const res=await fetch('https://bac-thay-xa-don.vercel.app/api/leaderboard',{method:'GET',cache:'no-store',headers:{Accept:'application/json'}});if(!res.ok)throw new Error('HTTP '+res.status);const body=await res.json();if(!Array.isArray(body.scores))throw new Error('Dữ liệu máy chủ không hợp lệ');renderScores(list,body.scores,true);status.textContent='Đã đồng bộ với máy chủ · '+body.scores.length+' người chơi.'}catch(e){status.textContent='Không kết nối được máy chủ: '+e.message;list.innerHTML='<div class="emptyState">Hãy mở game từ website đã triển khai và kiểm tra kết nối mạng.</div>'}finally{leaderboardBusy=false}}
+async function checkServer(){const el=document.querySelector('#serverStatus');if(!el)return;el.textContent='Đang kiểm tra máy chủ…';try{const res=await fetch('https://bac-thay-xa-don.vercel.app/api/leaderboard',{method:'GET',cache:'no-store',headers:{Accept:'application/json'}});if(!res.ok)throw new Error('HTTP '+res.status);const body=await res.json();el.textContent='✅ Máy chủ đang hoạt động · '+(body.scores?.length||0)+' người chơi trên BXH.'}catch(e){el.textContent='❌ Chưa kết nối được. Hãy mở bản game trên website đã triển khai, không mở tệp HTML trực tiếp.'}}
+async function submitOnlineScore(points,lvl){try{const res=await fetch('https://bac-thay-xa-don.vercel.app/api/leaderboard',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({username:getProfile(),score:Math.max(0,Math.floor(points)),level:Math.max(1,Math.floor(lvl))})});const body=await res.json().catch(()=>({}));if(!res.ok)throw new Error(body.error||'HTTP '+res.status);if(lbTab==='global')loadGlobalScores()}catch(e){toast('Chưa gửi được điểm online: '+e.message)}}
+async function submitCurrentBest(){await submitOnlineScore(score,level);toast('Đã gửi yêu cầu cập nhật điểm lên BXH.')}
+const LAB_WINS_KEY='bar-master-lab-wins-v1';
+let labWins=0,labChallenge={lm:3,ld:2,rm:2,rd:3};
+try{labWins=Math.max(0,Math.floor(Number(localStorage.getItem(LAB_WINS_KEY))||0))}catch{}
+function labValue(id){return Number(document.querySelector('#'+id).value)}
+function updateLab(){
+ const lm=labValue('leftMass'),ld=labValue('leftDist'),rm=labValue('rightMass'),rd=labValue('rightDist');
+ document.querySelector('#leftMassVal').textContent=lm+' kg';document.querySelector('#leftDistVal').textContent=ld+' m';document.querySelector('#rightMassVal').textContent=rm+' kg';document.querySelector('#rightDistVal').textContent=rd+' m';
+ document.querySelector('#leftMoment').textContent=lm*ld;document.querySelector('#rightMoment').textContent=rm*rd;document.querySelector('#labWins').textContent=labWins;
+ document.querySelector('#leftWeight').textContent=lm+' kg';document.querySelector('#rightWeight').textContent=rm+' kg';
+ document.querySelector('#leftWeight').style.left=(50-ld*9)+'%';document.querySelector('#rightWeight').style.left=(50+rd*9)+'%';
+ const diff=lm*ld-rm*rd,angle=Math.max(-13,Math.min(13,diff*1.25));document.querySelector('#leverBeam').style.transform=`rotate(${angle}deg)`;
+}
+function openLab(){document.querySelector('#labModal').style.display='flex';updateLab()}
+function closeLab(){document.querySelector('#labModal').style.display='none'}
+function newLabChallenge(){
+ // Generate a solvable integer challenge with an integer right-hand distance from 1 to 4 m.
+ const options=[];for(let lm=1;lm<=5;lm++)for(let ld=1;ld<=4;ld++)for(let rm=1;rm<=5;rm++){const rd=lm*ld/rm;if(Number.isInteger(rd)&&rd>=1&&rd<=4)options.push({lm,ld,rm,rd})}
+ let next=options[Math.floor(Math.random()*options.length)];if(options.length>1&&next.lm===labChallenge.lm&&next.ld===labChallenge.ld&&next.rm===labChallenge.rm&&next.rd===labChallenge.rd)next=options[(options.indexOf(next)+1)%options.length];labChallenge=next;
+ for(const [id,v] of [['leftMass',next.lm],['leftDist',next.ld],['rightMass',next.rm],['rightDist',Math.max(1,Math.min(4,Math.round(next.rd)+((Math.round(next.rd)===4)?-1:1)))]])document.querySelector('#'+id).value=v;
+ const result=document.querySelector('#labResult');result.className='labResult';result.textContent=`Thử thách: cân bằng ${next.lm} kg ở cách điểm tựa ${next.ld} m với ${next.rm} kg ở phía bên kia. Hãy tìm khoảng cách phù hợp.`;updateLab();
+}
+function checkLab(){const lm=labValue('leftMass'),ld=labValue('leftDist'),rm=labValue('rightMass'),rd=labValue('rightDist'),left=lm*ld,right=rm*rd,diff=Math.abs(left-right),el=document.querySelector('#labResult');if(diff===0){labWins++;try{localStorage.setItem(LAB_WINS_KEY,String(labWins))}catch{}el.className='labResult good';el.textContent=`Chính xác! Hai mômen tỉ lệ bằng nhau: ${lm} × ${ld} = ${rm} × ${rd} = ${left} kg·m. Đòn bẩy cân bằng trong mô hình lí tưởng.`;beep(880,.18,'triangle',.07);burst(W/2,210,12,['#68e8d0','#ffe08a','#fff'],120)}else{el.className='labResult bad';el.textContent=`Chưa cân bằng: bên trái = ${left} kg·m, bên phải = ${right} kg·m. ${left>right?'Mômen bên trái lớn hơn.':'Mômen bên phải lớn hơn.'} Hãy điều chỉnh khối lượng hoặc khoảng cách.`}updateLab()}
+function showRoundEnd(won){mode=won?'won':'failed';document.querySelector('#overlay').style.display='flex';document.querySelector('#title').textContent=won?(player.gain>=80?'TIẾP ĐẤT HOÀN HẢO!':'ĐỨNG VỮNG!'):'THỬ LẠI NÀO!';document.querySelector('#subtitle').textContent=won?`+${player.gain} điểm · ${player.flips||0} vòng lộn · Chuỗi combo ${combo}`:`${player.message} ${player.reason==='out'?'Bay xa quá rồi.':player.reason==='rot'?'Hãy kiểm soát vòng xoay trước khi chạm đất.':'Thử buông xà ở thời điểm khác nhé.'}`;document.querySelector('#play').textContent=won?'MÀN TIẾP THEO':'THỬ LẠI';document.querySelector('#howBtn').textContent='Về trang chính';document.querySelector('#resetBtn').textContent='Chia sẻ kết quả';document.querySelector('#bestStat').textContent=data.best;document.querySelector('#coinStat').textContent=data.coins;document.querySelector('#levelStat').textContent=data.unlocked}
+function openMenu(){mode='menu';document.querySelector('#overlay').style.display='flex';document.querySelector('#title').textContent='BẬC THẦY XÀ ĐƠN';document.querySelector('#subtitle').textContent='Canh nhịp, buông xà đúng lúc và tiếp đất thật vững. Vật lý là đối thủ cuối cùng!';document.querySelector('#play').textContent='BẮT ĐẦU CHƠI';document.querySelector('#howBtn').textContent='Cách chơi';document.querySelector('#resetBtn').textContent='Xóa tiến trình';document.querySelector('#bestStat').textContent=data.best;document.querySelector('#coinStat').textContent=data.coins;document.querySelector('#levelStat').textContent=data.unlocked;selected=data.skin;drawSkin()}
+function drawSkin(){const s=skins[selected];document.querySelector('#swatch').style.background=`linear-gradient(135deg,${s.shirt} 0 50%,${s.pants} 50%)`;document.querySelector('#skinName').textContent=s.name+(data.skin===selected?' ✓':'');document.querySelector('#skinCost').textContent=data.owned.includes(selected)?'Đã sở hữu':`🔒 ${s.cost} xu`;document.querySelector('#play').disabled=false}
+function chooseSkin(dir){selected=(selected+dir+skins.length)%skins.length;const s=skins[selected];if(!data.owned.includes(selected)&&data.coins>=s.cost){if(confirm(`Mua trang phục ${s.name} với ${s.cost} xu?`)){data.coins-=s.cost;data.owned.push(selected);data.skin=selected;save();toast('Đã mua trang phục!')}}else if(data.owned.includes(selected)){data.skin=selected;save()}drawSkin()}
+function resize(){dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(canvas.clientWidth*dpr);canvas.height=Math.round(canvas.clientHeight*dpr);scale=Math.min(canvas.clientWidth/W,canvas.clientHeight/H);ox=(canvas.clientWidth-W*scale)/2;oy=(canvas.clientHeight-H*scale)/2}
+function line(a,b,width,color){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}
+function text(str,x,y,size,color='#fff',align='center'){ctx.font=`800 ${size}px system-ui,sans-serif`;ctx.textAlign=align;ctx.textBaseline='alphabetic';ctx.lineJoin='round';ctx.lineWidth=Math.max(2,size/7);ctx.strokeStyle='#050812aa';ctx.strokeText(str,x,y);ctx.fillStyle=color;ctx.fillText(str,x,y)}
+function drawFigure(q,dead=false){
+ const s=skins[data.skin]||skins[0],h=q.head;
+ // Soft contact shadow and small glow keep the procedural character crisp on every screen.
+ ctx.save();ctx.globalAlpha=.22;ctx.fillStyle='#020711';ctx.beginPath();ctx.ellipse(q.hip.x+4,q.hip.y+17,18,7,.1,0,TAU);ctx.fill();ctx.restore();
+ ctx.lineCap='round';ctx.lineJoin='round';
+ const limbs=[['hip','leftFoot',8,s.pants],['hip','rightFoot',8,s.pants],['neck','hip',15,s.shirt],['neck','leftHand',7,'#f4c99b'],['neck','rightHand',7,'#f4c99b']];
+ for(const[a,b,w,c]of limbs){line(q[a],q[b],w+5,'#07101c');line(q[a],q[b],w,c);ctx.save();ctx.globalAlpha=.32;line(q[a],q[b],Math.max(2,w*.28),'#ffffff');ctx.restore()}
+ // Shoes
+ for(const n of ['leftFoot','rightFoot']){const f=q[n];ctx.fillStyle='#07101c';ctx.beginPath();ctx.ellipse(f.x+2,f.y+2,7,4,.1,0,TAU);ctx.fill();ctx.fillStyle='#f1f7ff';ctx.beginPath();ctx.ellipse(f.x+1,f.y,6,3,.1,0,TAU);ctx.fill()}
+ // Shirt badge and collar
+ ctx.fillStyle='#07101c';ctx.beginPath();ctx.arc(q.neck.x,q.neck.y,7,0,TAU);ctx.fill();ctx.fillStyle=s.shirt;ctx.beginPath();ctx.arc(q.neck.x,q.neck.y,4.5,0,TAU);ctx.fill();
+ // Face with rim light and a simple hair cap
+ const face=ctx.createRadialGradient(h.x-5,h.y-7,2,h.x,h.y,18);face.addColorStop(0,'#ffe0b9');face.addColorStop(1,'#c98760');ctx.fillStyle='#07101c';ctx.beginPath();ctx.arc(h.x,h.y,17,0,TAU);ctx.fill();ctx.fillStyle=face;ctx.beginPath();ctx.arc(h.x,h.y,14,0,TAU);ctx.fill();
+ ctx.fillStyle=s.shirt;ctx.beginPath();ctx.ellipse(h.x,h.y-10,14,7,-.08,Math.PI,TAU);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(h.x-5,h.y,3.2,0,TAU);ctx.arc(h.x+5,h.y,3.2,0,TAU);ctx.fill();ctx.fillStyle='#18263a';ctx.beginPath();ctx.arc(h.x-4.2,h.y+.3,1.6,0,TAU);ctx.arc(h.x+5.8,h.y+.3,1.6,0,TAU);ctx.fill();
+ // Cheek / expression details
+ ctx.fillStyle='#e88e83';ctx.globalAlpha=.6;ctx.beginPath();ctx.arc(h.x-8,h.y+4,2,0,TAU);ctx.arc(h.x+8,h.y+4,2,0,TAU);ctx.fill();ctx.globalAlpha=1;
+ if(dead){ctx.strokeStyle='#263347';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(h.x-7,h.y-2);ctx.lineTo(h.x-2,h.y+3);ctx.moveTo(h.x-2,h.y-2);ctx.lineTo(h.x-7,h.y+3);ctx.moveTo(h.x+3,h.y-2);ctx.lineTo(h.x+8,h.y+3);ctx.moveTo(h.x+8,h.y-2);ctx.lineTo(h.x+3,h.y+3);ctx.stroke()}
+}
+function drawBackground(w){
+ const t=worlds[w],g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,t.sky[0]);g.addColorStop(.62,t.sky[1]);g.addColorStop(1,t.ground);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ // Large ambient light and layered silhouettes add depth without external assets.
+ const glow=ctx.createRadialGradient(W*.72,H*.2,4,W*.72,H*.2,Math.max(W,H)*.72);glow.addColorStop(0,w===4?'#b56aff30':t.accent+'42');glow.addColorStop(1,'#00000000');ctx.fillStyle=glow;ctx.fillRect(0,0,W,H);
+ if(w===0){
+  // Indoor gym: ceiling beams, tall windows, wall panels and floor markings.
+  ctx.fillStyle='#06112635';ctx.fillRect(0,0,W,36);for(let x=-10;x<W;x+=72){ctx.fillStyle='#ffffff0a';ctx.fillRect(x+5,43,56,FLOOR-60);ctx.fillStyle='#ffffff12';ctx.fillRect(x+5,43,2,FLOOR-60)}
+  ctx.strokeStyle='#d9efff12';ctx.lineWidth=1;for(let y=62;y<FLOOR;y+=58){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+  for(let x=28;x<W;x+=100){const lg=ctx.createLinearGradient(x,0,x+42,0);lg.addColorStop(0,'#8ceaff00');lg.addColorStop(.5,'#8ceaff26');lg.addColorStop(1,'#8ceaff00');ctx.fillStyle=lg;ctx.fillRect(x,42,42,8)}
+  ctx.fillStyle='#08122655';ctx.fillRect(0,FLOOR-34,W,34);ctx.strokeStyle='#ffe08a20';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,FLOOR-31);ctx.lineTo(W,FLOOR-31);ctx.stroke();
+ }else if(w===1){
+  const sun=ctx.createRadialGradient(278,80,2,278,80,58);sun.addColorStop(0,'#fff9c8');sun.addColorStop(1,'#fff9c800');ctx.fillStyle=sun;ctx.fillRect(215,18,126,126);ctx.fillStyle='#fff5b9';ctx.beginPath();ctx.arc(278,80,21,0,TAU);ctx.fill();
+  ctx.fillStyle='#317d70';ctx.beginPath();ctx.moveTo(0,FLOOR-20);ctx.quadraticCurveTo(65,FLOOR-105,130,FLOOR-22);ctx.quadraticCurveTo(230,FLOOR-130,360,FLOOR-15);ctx.lineTo(360,FLOOR);ctx.lineTo(0,FLOOR);ctx.fill();
+  ctx.fillStyle='#245d4e';ctx.beginPath();ctx.moveTo(0,FLOOR-3);ctx.quadraticCurveTo(80,FLOOR-70,165,FLOOR-8);ctx.quadraticCurveTo(260,FLOOR-85,360,FLOOR-10);ctx.lineTo(360,FLOOR);ctx.lineTo(0,FLOOR);ctx.fill();
+  for(let i=0;i<4;i++){let x=(i*120+time*7)%430-35,y=75+i%2*48;ctx.fillStyle='#ffffff80';ctx.beginPath();ctx.ellipse(x,y,25,8,0,0,TAU);ctx.ellipse(x+18,y-5,17,8,0,0,TAU);ctx.fill()}
+  for(let i=0;i<6;i++){let x=i*67+15;ctx.fillStyle='#163d3b55';ctx.fillRect(x,FLOOR-55,3,45);ctx.fillStyle='#2d765a';ctx.beginPath();ctx.arc(x+1,FLOOR-58,15,0,TAU);ctx.fill()}
+ }else if(w===2){
+  const sun=ctx.createRadialGradient(258,102,2,258,102,95);sun.addColorStop(0,'#ffe9a0');sun.addColorStop(1,'#ff9f4300');ctx.fillStyle=sun;ctx.fillRect(160,10,190,190);ctx.fillStyle='#ffe4a0';ctx.beginPath();ctx.arc(258,102,25,0,TAU);ctx.fill();
+  for(let i=0;i<10;i++){const h=65+rng(i+3)*190,x=i*40-4;ctx.fillStyle=i%2?'#251936':'#1b1832';ctx.fillRect(x,FLOOR-h,35,h);ctx.fillStyle='#ffcb6b38';for(let j=0;j<h/24;j++)if(rng(i*7+j)>.35){ctx.fillRect(x+7,FLOOR-h+9+j*24,7,10);ctx.fillRect(x+21,FLOOR-h+9+j*24,7,10)}}
+  ctx.strokeStyle='#ffd16620';ctx.lineWidth=1;for(let y=70;y<FLOOR;y+=54){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+ }else if(w===3){
+  ctx.fillStyle='#ffffff18';ctx.beginPath();ctx.arc(66,78,30,0,TAU);ctx.fill();ctx.fillStyle='#fff8c8';ctx.beginPath();ctx.arc(66,78,20,0,TAU);ctx.fill();
+  for(let x=0;x<W;x+=44){ctx.fillStyle=x%88?'#ffffff08':'#ffffff10';ctx.fillRect(x,0,2,FLOOR)}for(let y=0;y<FLOOR;y+=48){ctx.fillStyle='#ffffff09';ctx.fillRect(0,y,W,1)}
+  ctx.fillStyle='#ffffff12';ctx.beginPath();ctx.moveTo(0,FLOOR-70);ctx.lineTo(W,FLOOR-120);ctx.lineTo(W,FLOOR-102);ctx.lineTo(0,FLOOR-52);ctx.fill();
+ }else{
+  for(let i=0;i<80;i++){const x=(rng(i+1)*W+time*(i%3+1)*2)%W,y=rng(i+50)*(FLOOR-35);ctx.fillStyle=`rgba(255,255,255,${.2+.6*Math.abs(Math.sin(time*.7+i))})`;ctx.fillRect(x,y,i%9===0?2:1, i%9===0?2:1)}
+  const planet=ctx.createRadialGradient(82,130,3,82,130,45);planet.addColorStop(0,'#b68cff');planet.addColorStop(.75,'#6a39a5');planet.addColorStop(1,'#35185e');ctx.fillStyle=planet;ctx.beginPath();ctx.arc(82,130,37,0,TAU);ctx.fill();ctx.strokeStyle='#d4a5ff';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(82,130,57,12,-.28,0,TAU);ctx.stroke();ctx.strokeStyle='#9e6be8';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(82,130,57,12,-.28,.1,Math.PI);ctx.stroke();
+  ctx.strokeStyle='#6e51a4';ctx.lineWidth=1;for(let y=45;y<FLOOR;y+=52){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+ }
+ // Lightweight ambient motes add depth without image assets or expensive filters.
+ for(let i=0;i<18;i++){const x=(rng(i+31)*W+time*(5+i%4)*((i%2)?1:-1)+W*2)%(W+24)-12;const y=34+rng(i+71)*(FLOOR-70);const pulse=.18+.28*(.5+.5*Math.sin(time*1.3+i*1.7));ctx.globalAlpha=pulse;ctx.fillStyle=i%4===0?t.accent:'#d9f4ff';ctx.beginPath();ctx.arc(x,y,i%5===0?1.7:1,0,TAU);ctx.fill()}ctx.globalAlpha=1;
+ // Ground with a top lip, subtle stripes and perspective grid.
+ const gg=ctx.createLinearGradient(0,FLOOR,0,H);gg.addColorStop(0,t.ground);gg.addColorStop(1,'#050a14');ctx.fillStyle=gg;ctx.fillRect(0,FLOOR,W,H-FLOOR);ctx.fillStyle=t.accent;ctx.globalAlpha=.75;ctx.fillRect(0,FLOOR,W,3);ctx.globalAlpha=1;
+ ctx.strokeStyle='#ffffff10';ctx.lineWidth=1;for(let x=-W;x<W*2;x+=36){ctx.beginPath();ctx.moveTo(W/2+(x-W/2)*.22,FLOOR);ctx.lineTo(x,H);ctx.stroke()}for(let y=FLOOR+15;y<H;y+=16){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+}
+function drawTrajectory(){
+ if(!player||player.mode!=='swing'||!platform)return;
+ const {x,y}=swingPosition(),a=player.angle,r=player.r,o=player.omega;
+ let px=x,py=y,vx=r*o*Math.cos(a)+player.radial*Math.sin(a),vy=-r*o*Math.sin(a)+player.radial*Math.cos(a);
+ ctx.save();ctx.setLineDash([3,5]);ctx.lineWidth=2;ctx.strokeStyle='#ffffff9a';ctx.beginPath();ctx.moveTo(px,py);
+ for(let i=1;i<=24;i++){const t=.075;vx+=platform.wind*t;vy+=platform.g*t;px+=vx*t;py+=vy*t;if(px<-10||px>W+10||py>FLOOR)break;ctx.lineTo(px,py)}
+ ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#ffd166';ctx.beginPath();ctx.arc(px,py,3,0,TAU);ctx.fill();ctx.restore();
+}
+function draw(){ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#0b1020';ctx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight);ctx.setTransform(dpr*scale,0,0,dpr*scale,ox*dpr,oy*dpr);ctx.save();ctx.beginPath();ctx.rect(0,0,W,H);ctx.clip();const wi=worldIndex(level);drawBackground(wi);if(platform){const p=platform;const pg=ctx.createLinearGradient(p.x-p.w/2,0,p.x+p.w/2,0);pg.addColorStop(0,'#07111c');pg.addColorStop(.12,worlds[wi].accent);pg.addColorStop(.5,'#ffffff');pg.addColorStop(.88,worlds[wi].accent);pg.addColorStop(1,'#07111c');ctx.fillStyle=pg;ctx.fillRect(p.x-p.w/2,p.y,p.w,FLOOR-p.y);ctx.fillStyle='#ffffffaa';ctx.fillRect(p.x-p.w/2,p.y,p.w,4);ctx.fillStyle='#00000026';for(let y=p.y+15;y<FLOOR;y+=14)ctx.fillRect(p.x-p.w/2,y,p.w,3);ctx.strokeStyle='#ffffff80';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,p.w/2-4,5,0,0,TAU);ctx.stroke()}
+drawTrajectory();
+const post=ctx.createLinearGradient(BAR.x-38,0,BAR.x-27,0);post.addColorStop(0,'#33465e');post.addColorStop(.45,'#d9f3ff');post.addColorStop(1,'#6c829b');ctx.fillStyle=post;ctx.fillRect(BAR.x-34,BAR.y,6,FLOOR-BAR.y);ctx.fillStyle='#ffffff18';ctx.fillRect(BAR.x-28,BAR.y+6,2,FLOOR-BAR.y-6);ctx.shadowColor='#b5e9ff88';ctx.shadowBlur=12;const bg=ctx.createLinearGradient(BAR.x-38,BAR.y-4,BAR.x+48,BAR.y+4);bg.addColorStop(0,'#9db4ca');bg.addColorStop(.35,'#ffffff');bg.addColorStop(.7,'#d9eaff');bg.addColorStop(1,'#7188a4');ctx.fillStyle=bg;ctx.beginPath();ctx.roundRect(BAR.x-36,BAR.y-4,86,8,4);ctx.fill();ctx.shadowBlur=0;
+if(player&&mode!=='menu'&&player.coins){for(const c of player.coins)if(!c.got){ctx.save();ctx.translate(c.x,c.y);ctx.scale(Math.cos(time*4+c.x),1);ctx.fillStyle='#ffd60a';ctx.strokeStyle='#b8860b';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,8,0,TAU);ctx.fill();ctx.stroke();ctx.restore()}}
+if(player&&mode!=='menu'){if(player.mode==='fly'&&trail.length>1){ctx.save();ctx.lineCap='round';for(let i=1;i<trail.length;i++){ctx.globalAlpha=(i/trail.length)*.48;ctx.strokeStyle='#80ed99';ctx.lineWidth=1+i/trail.length*3;ctx.beginPath();ctx.moveTo(trail[i-1].x,trail[i-1].y);ctx.lineTo(trail[i].x,trail[i].y);ctx.stroke()}ctx.restore()}let q;if(player.mode==='swing'){const v=swingPosition();q=pointPose(v.x,v.y,player.angle,currentTuck());q.leftHand=q.rightHand={x:BAR.x,y:BAR.y}}else if(player.mode==='crash'){q=pointPose(player.x,Math.min(FLOOR-25,player.y),player.phase,currentTuck())}else q=pointPose(player.x,player.y,player.phase,currentTuck());if(player.mode==='fly'){ctx.fillStyle='#0005';ctx.beginPath();ctx.ellipse(player.x,Math.min(FLOOR,platform.y)+3,22,5,0,0,TAU);ctx.fill()}drawFigure(q,player.mode==='crash')}
+else{const a=Math.sin(time*1.6)*.75,v={x:BAR.x+ARM*Math.sin(a),y:BAR.y+ARM*Math.cos(a)};const q=pointPose(v.x,v.y,a);q.leftHand=q.rightHand={x:BAR.x,y:BAR.y};drawFigure(q)}
+for(const p of particles){ctx.globalAlpha=Math.max(0,p.life/p.max);ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y,p.size,p.size)}ctx.globalAlpha=1;
+for(const f of floatingTexts){const a=Math.max(0,Math.min(1,f.life/f.max));ctx.save();ctx.globalAlpha=a;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`900 ${f.size}px system-ui, sans-serif`;ctx.lineJoin='round';ctx.lineWidth=4;ctx.strokeStyle='#07111c';ctx.strokeText(f.label,f.x,f.y);ctx.shadowColor=f.color;ctx.shadowBlur=8;ctx.fillStyle=f.color;ctx.fillText(f.label,f.x,f.y);ctx.restore()}
+if(player&&player.banner>0&&mode==='playing'){ctx.globalAlpha=Math.min(1,player.banner);text('THẾ GIỚI '+(wi+1),W/2,250,18);text(worlds[wi].name.toUpperCase(),W/2,283,29,worlds[wi].accent);ctx.globalAlpha=1}
+if(player&&mode==='playing'){if(player.mode==='swing'&&firstAttempt){text('GIỮ = CO NGƯỜI · THẢ = DUỖI',W/2,590,13,'#ffd166');text('CHẠM NHANH = BUÔNG XÀ',W/2,612,13,'#ffd166')}else if(player.mode==='swing'||player.mode==='fly')text(held?'CO NGƯỜI':'DUỖI',W/2,612,13,'#b8d8ff');if(player.mode==='stick'){text('TIẾP ĐẤT!',W/2,300,29,'#80ed99');text('+'+player.gain+' điểm',W/2,330,17,'#ffd166')}if(player.mode==='crash')text(player.message,W/2,300,20,'#ff6b6b')}
+ctx.restore()}
+function loop(ts){const dt=Math.min(.032,(ts-last)/1000||0);last=ts;time+=dt;if(mode==='playing'&&player){acc+=dt;let n=0;while(acc>=1/120&&n++<5){physics(1/120);acc-=1/120}if(player.banner>0)player.banner-=dt;if(player.shake>0)player.shake=Math.max(0,player.shake-dt*20)}for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=420*dt;if(p.life<=0)particles.splice(i,1)}for(let i=floatingTexts.length-1;i>=0;i--){const f=floatingTexts[i];f.life-=dt;f.y+=f.vy*dt;if(f.life<=0)floatingTexts.splice(i,1)}draw();requestAnimationFrame(loop)}
+function eventPoint(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left-ox)/scale,y:(e.clientY-r.top-oy)/scale}}
+canvas.addEventListener('pointerdown',e=>{e.preventDefault();if(e.isPrimary===false||held)return;initAudio();if(mode!=='playing'||!player)return;held=true;pressAt=performance.now();try{canvas.setPointerCapture(e.pointerId)}catch{}});
+canvas.addEventListener('pointerup',e=>{e.preventDefault();if(!held)return;held=false;if(mode==='playing'&&player?.mode==='swing'&&performance.now()-pressAt<190)releaseBar()});
+canvas.addEventListener('pointercancel',()=>{held=false});
+document.querySelector('#play').addEventListener('click',()=>{initAudio();if(mode==='paused'){mode='playing';document.querySelector('#overlay').style.display='none';last=performance.now();return}if(mode==='won'){level++;freshRound()}else if(mode==='failed'){freshRound()}else{level=Math.max(1,Math.min(data.unlocked,level));score=0;combo=0;freshRound()}document.querySelector('#overlay').style.display='none';updateHud()});
+document.querySelector('#prevSkin').addEventListener('click',()=>{selected=(selected+skins.length-1)%skins.length;drawSkin()});
+document.querySelector('#nextSkin').addEventListener('click',()=>{selected=(selected+1)%skins.length;drawSkin()});
+document.querySelector('#swatch').addEventListener('click',()=>chooseSkin(0));
+document.querySelector('#howBtn').addEventListener('click',()=>{if(mode==='won'||mode==='failed'){openMenu();return}if(mode==='paused'){freshRound();document.querySelector('#overlay').style.display='none';return}document.querySelector('#help').textContent='Giữ màn hình để co người. Chạm nhanh dưới 190 ms để buông xà. Quan sát quỹ đạo chấm trắng và canh tiếp đất trên bệ.';toast('Mẹo: quan sát quỹ đạo trước khi buông xà!')});
+document.querySelector('#resetBtn').addEventListener('click',async()=>{if(mode==='paused'){openMenu();return}if(mode==='won'||mode==='failed'){const msg=`Tôi đạt ${score} điểm ở màn ${level} trong Bậc Thầy Xà Đơn!`;try{if(navigator.share)await navigator.share({title:document.title,text:msg});else{await navigator.clipboard.writeText(msg);toast('Đã sao chép kết quả')}}catch{}return}if(confirm('Xóa toàn bộ điểm, xu và trang phục đã mua?')){data={...defaults,owned:[0]};muted=false;selected=0;save();score=0;combo=0;level=1;openMenu();updateHud();toast('Đã xóa tiến trình')}});
+document.querySelector('#soundBtn').addEventListener('click',()=>{initAudio();muted=!muted;data.mute=muted;save();updateHud();if(!muted)beep(660,.08)});
+document.querySelector('#musicBtn').addEventListener('click',toggleMusic);
+document.querySelector('#pauseBtn').addEventListener('click',()=>{if(mode==='playing'){mode='paused';document.querySelector('#overlay').style.display='flex';document.querySelector('#title').textContent='TẠM DỪNG';document.querySelector('#subtitle').textContent='Nghỉ một chút rồi quay lại chinh phục màn này.';document.querySelector('#play').textContent='TIẾP TỤC';document.querySelector('#howBtn').textContent='Chơi lại màn';document.querySelector('#resetBtn').textContent='Về trang chính';syncMusic()}else if(mode==='paused'){mode='playing';document.querySelector('#overlay').style.display='none';syncMusic()}})
+window.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();if(!held){held=true;pressAt=performance.now()}}if(e.code==='Escape'&&mode==='playing')document.querySelector('#pauseBtn').click()});window.addEventListener('keyup',e=>{if(e.code==='Space'&&held){held=false;if(mode==='playing'&&player?.mode==='swing'&&performance.now()-pressAt<190)releaseBar()}});
+
+document.querySelector('#labBtn').addEventListener('click',openLab);
+document.querySelector('#labClose').addEventListener('click',closeLab);
+document.querySelector('#labModal').addEventListener('click',e=>{if(e.target.id==='labModal')closeLab()});
+for(const id of ['leftMass','leftDist','rightMass','rightDist'])document.querySelector('#'+id).addEventListener('input',updateLab);
+document.querySelector('#labCheck').addEventListener('click',checkLab);
+document.querySelector('#labChallenge').addEventListener('click',newLabChallenge);
+document.querySelector('#leaderBtn').addEventListener('click',openLeaderboard);
+document.querySelector('#leaderClose').addEventListener('click',closeLeaderboard);
+document.querySelector('#leaderModal').addEventListener('click',e=>{if(e.target.id==='leaderModal')closeLeaderboard()});
+document.querySelector('#tabLocal').addEventListener('click',()=>setLeaderTab('local'));
+document.querySelector('#tabGlobal').addEventListener('click',()=>setLeaderTab('global'));
+document.querySelector('#tabSetup').addEventListener('click',()=>setLeaderTab('setup'));
+document.querySelector('#savePlayerName').addEventListener('click',()=>{setProfile(document.querySelector('#playerName').value);toast('Đã lưu tên hiển thị.')});
+document.querySelector('#playerName').addEventListener('keydown',e=>{if(e.key==='Enter'){setProfile(e.target.value);toast('Đã lưu tên hiển thị.')}});
+document.querySelector('#refreshGlobal').addEventListener('click',loadGlobalScores);
+document.querySelector('#submitBest').addEventListener('click',submitCurrentBest);
+document.querySelector('#checkServer').addEventListener('click',checkServer);
+window.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('#leaderModal').style.display==='flex')closeLeaderboard();if(e.key==='Escape'&&document.querySelector('#labModal').style.display==='flex')closeLab()});
+window.addEventListener('resize',resize,{passive:true});document.addEventListener('visibilitychange',()=>{if(document.hidden&&mode==='playing')document.querySelector('#pauseBtn').click();last=performance.now();acc=0;syncMusic()});window.addEventListener('blur',()=>{held=false;if(mode==='playing')document.querySelector('#pauseBtn').click()});
+resize();setProfile(getProfile());renderLocalScores();updateLab();openMenu();updateHud();requestAnimationFrame(loop);
+})();
+</script></body></html>
