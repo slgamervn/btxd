@@ -77,9 +77,15 @@ button:hover{filter:brightness(1.12);border-color:#8ccaff65}button:active{transf
 @media(max-width:380px){#hud{inset:calc(env(safe-area-inset-top) + 7px) 7px auto;gap:5px}.pill{padding:7px 8px;font-size:11px}#rightHud{gap:4px}.icon{width:37px;height:37px;min-width:37px;min-height:37px;padding:6px}#panel{padding:21px 16px 17px;border-radius:24px}}
 @media(prefers-reduced-motion:reduce){#play:before{animation:none;display:none}button{transition:none}}
 
-</style>
+#creditSplash{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(ellipse at 50% 38%,#1c3650 0%,#101827 45%,#090d18 100%);color:#f8fafc;font-family:system-ui,-apple-system,sans-serif;transition:opacity .35s ease,visibility .35s ease}#creditSplash.is-hidden{opacity:0;visibility:hidden;pointer-events:none}.credit-mark{width:76px;height:76px;display:grid;place-items:center;border:2px solid #80ed99;border-radius:24px;color:#80ed99;font-weight:1000;font-size:21px;letter-spacing:-1px;box-shadow:0 0 35px #80ed9926}.credit-title{font-weight:900;font-size:clamp(20px,5vw,28px);letter-spacing:1px;text-align:center}.credit-by{font-size:12px;letter-spacing:2px;color:#a9b8cc}.credit-by strong{color:#80ed99}.credit-track{width:150px;height:3px;margin-top:12px;border-radius:8px;background:#293651;overflow:hidden}.credit-track span{display:block;width:35%;height:100%;background:#80ed99;border-radius:8px;animation:creditLoad 1.15s ease-in-out infinite alternate}@keyframes creditLoad{from{transform:translateX(-10%)}to{transform:translateX(200%)}}@media(prefers-reduced-motion:reduce){.credit-track span{animation:none;width:100%}}</style>
 </head>
 <body>
+<div id="creditSplash" role="status" aria-label="Được làm bởi nhuquynh">
+  <div class="credit-mark">BTXD</div>
+  <div class="credit-title">BẬC THẦY XÀ ĐƠN</div>
+  <div class="credit-by">ĐƯỢC LÀM BỞI <strong>NHUQUYNH</strong></div>
+  <div class="credit-track"><span></span></div>
+</div>
 <canvas id="game" aria-label="Trò chơi Bậc Thầy Xà Đơn"></canvas>
 <div id="hud">
   <div class="pill" id="levelHud">Màn 1 · Phòng Gym<br>Điểm 0</div>
@@ -381,6 +387,7 @@ document.querySelector('#submitBest').addEventListener('click',submitCurrentBest
 document.querySelector('#checkServer').addEventListener('click',checkServer);
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('#leaderModal').style.display==='flex')closeLeaderboard();if(e.key==='Escape'&&document.querySelector('#labModal').style.display==='flex')closeLab()});
 window.addEventListener('resize',resize,{passive:true});document.addEventListener('visibilitychange',()=>{if(document.hidden&&mode==='playing')document.querySelector('#pauseBtn').click();last=performance.now();acc=0;syncMusic()});window.addEventListener('blur',()=>{held=false;if(mode==='playing')document.querySelector('#pauseBtn').click()});
+const creditSplash=document.querySelector('#creditSplash');window.addEventListener('load',()=>setTimeout(()=>creditSplash?.classList.add('is-hidden'),1500),{once:true});setTimeout(()=>creditSplash?.classList.add('is-hidden'),3500);
 resize();setProfile(getProfile());renderLocalScores();updateLab();openMenu();updateHud();requestAnimationFrame(loop);
 })();
 </script></body></html>
