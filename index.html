@@ -191,7 +191,7 @@ function load(){
 function save(){try{localStorage.setItem('bar-master-v3',JSON.stringify(data))}catch{toast('Không thể lưu tiến trình trên thiết bị này.')}}
 function worldIndex(l){return Math.floor((l-1)/6)%5}
 function rng(n){const x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x)}
-function platformFor(l){const wi=worldIndex(l),k=(l-1)%6;return {baseX:l<3?225:200+rng(l)*85,x:225,y:wi===2?450:500,w:Math.max(58,116-l*2.5),amp:wi>0&&k>=3?Math.min(34,10+l):0,speed:1.1+rng(l+5),wind:wi===2?(k%2?1:-1)*55:0,g:wi===4?600:G}}
+function platformFor(l){const wi=worldIndex(l),k=(l-1)%6;return {baseX:l<3?225:200+rng(l)*85,x:225,y:wi===2?450:500,w:Math.max(82,116-l*1.6),amp:wi>0&&k>=3?Math.min(20,8+l*.7):0,speed:1.1+rng(l+5),wind:wi===2?(k%2?1:-1)*55:0,g:wi===4?600:G}}
 function freshRound(){acc=0;platform=platformFor(level);player={mode:'swing',angle:-.7,prevAngle:-.7,omega:0,r:ARM,radial:0,x:0,y:0,vx:0,vy:0,phase:0,spin:0,angular:0,t:0,shake:0,banner:2.0,coins:[1,2,3].map((n)=>({x:115+(platform.baseX-115)*n/4,y:270+(platform.y-100-270)*n/4-65*Math.sin(n/4*Math.PI),got:false})),reason:'',message:''};particles=[];trail=[];floatingTexts=[];held=false;firstAttempt=true;mode='playing';updateHud()}
 function initAudio(){
  try{
